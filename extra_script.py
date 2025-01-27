@@ -104,13 +104,20 @@ def writeFileIfChanged(fileName,data):
     return True    
 
 def mergeConfig(base,other):
+    custconf = {}
+    customprefix = "custom_config_"
+    for opt in env.GetProjectConfig().options("env:"+env['PIOENV']):
+        if opt.startswith(customprefix):
+            custconf[opt[len(customprefix):]] = env.GetProjectOption(opt)
     for bdir in other:
-        cname=os.path.join(bdir,"config.json")
+        try:
+            cname = os.path.join(bdir, custconf[os.path.basename(bdir)])
+        except KeyError:
+            cname = os.path.join(bdir, "config.json")
         if os.path.exists(cname):
-            print("merge config %s"%cname)
+            print("merge config {}".format(cname))
             with open(cname,'rb') as ah:
-                merge=json.load(ah)
-                base=base+merge
+                base += json.load(ah)
     return base
 
 def replaceTexts(data,replacements):
